@@ -5,16 +5,31 @@ const { verifyAccessToken } = require('./helpers/jwt_helper');
 require('dotenv').config();
 require('./helpers/init_mongodb');
 require('./helpers/init_redis');
-
-
 const authRoute = require('./routes/auth.route');
-const chatRoute = require('')
+const chatRoute = require('./routes/chat.route');
+const cors = require('cors');
+const ChatController = require('./controllers/Chat.Controller');
 
 const app = express();
+
+const http = require('http').Server(app);
+
+ChatController.initialize(http);
+
+const PORT = process.env.PORT || 3000;
+
+http.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+});
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
+app.use(cors({
+    origin: '*'
+}));
+
 
 app.get('/', verifyAccessToken, async(req, res, next) => {
     console.log(req.headers['authorization']);
@@ -23,7 +38,7 @@ app.get('/', verifyAccessToken, async(req, res, next) => {
 });
 
 app.use('/auth', authRoute);
-app.use('/chat', )
+app.use('/chat', chatRoute);
 
 app.use(async (req, res, next) => {
     next(createError.NotFound());
@@ -37,10 +52,4 @@ app.use((error, req, res, next) => {
             message: error.message
         }
     });
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
 });
